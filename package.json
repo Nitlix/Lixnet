@@ -1,0 +1,23 @@
+{
+  "name": "lixnet",
+  "version": "1.0.0",
+  "author": "Nitlix",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nitlix/Lixnet"
+  },
+  "homepage": "https://github.com/Nitlix/lixnet",
+  "description": "RPC over HTTP and WebSockets, simplified.",
+  "module": "src/exports.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "zod": "^4.0.8"
+  }
+}
