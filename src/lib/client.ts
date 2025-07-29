@@ -1,48 +1,45 @@
-import type { EventCollection, CallableEvent } from "./types";
+import type {
+    EventCollection,
+    ClientEventInput,
+    ClientEventOutput,
+    ClientCaller,
+} from "./types";
 
-export default class LixnetClientConstructor<TEvents extends EventCollection> {
-    private baseUrl: string;
+export default class LixnetClient<TEvents extends EventCollection> {
+    private rpcUrl: string;
     private events: TEvents;
 
     public constructor({
         events,
-        baseUrl,
+        rpcUrl,
     }: {
         events: TEvents;
-        baseUrl: string;
+        rpcUrl: string;
     }) {
-        this.baseUrl = baseUrl;
+        this.rpcUrl = rpcUrl;
         this.events = events;
     }
 
-    public getClient(): {
-        [K in keyof TEvents]: TEvents[K] extends {
-            handler: (input: infer TInput) => Promise<infer TOutput>;
-        }
-            ? CallableEvent<Omit<TInput, "request">, TOutput>
-            : never;
-    } {
-        const client = {} as any;
-
-        Object.keys(this.events).forEach((key) => {
-            client[key] = async (input: any) => {
-                const response = await fetch(this.baseUrl, {
-                    method: "POST",
-                    body: JSON.stringify({ event: key, input }),
-                });
-                try {
-                    const json = (await response.json()) as any;
-                    if (json.error) {
-                        throw new Error(json.error);
-                    }
-                    return json.data;
-                } catch (error) {
-                    console.error(error);
-                    return null;
-                }
-            };
+    public call: ClientCaller<TEvents> = async (event, input) => {
+        const response = await fetch(this.rpcUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ event, input }),
         });
 
-        return client;
+        const json = await response.json();
+
+        if (json.error) {
+            throw new Error(json.error);
+        }
+
+        return json.data;
+    };
+
+    // Keep this for internal use only
+    public getEventCollection(): TEvents {
+        return this.events;
     }
 }

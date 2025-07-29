@@ -46,9 +46,9 @@ export default class LixnetServer<TEvents extends EventCollection> {
             );
         }
 
-        if (!jsonData.action) {
+        if (!jsonData.event) {
             return this.jsonResponseMaker(
-                { error: "Action not found" },
+                { error: "Event not found" },
                 { status: 400 }
             );
         }
@@ -64,7 +64,7 @@ export default class LixnetServer<TEvents extends EventCollection> {
         if (!event) {
             return this.jsonResponseMaker(
                 {
-                    error: "Action not found",
+                    error: "Event not found",
                 },
                 { status: 404 }
             );

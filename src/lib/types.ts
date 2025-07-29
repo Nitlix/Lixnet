@@ -19,7 +19,6 @@ export type EventType<TInput = any, TOutput = any> = {
 };
 
 export type EventCollection = Record<string, Event>;
-export type EventTypeCollection = Record<string, EventType>;
 
 export type LixnetServerInit<TEvents extends EventCollection> = {
     debugLog?: boolean;
@@ -28,26 +27,28 @@ export type LixnetServerInit<TEvents extends EventCollection> = {
     events: TEvents;
 };
 
-export type LixnetClientInit<TEventTypes extends EventTypeCollection> = {
-    eventTypes: TEventTypes;
-    baseUrl: string;
-};
-
-export type CallableEvent<TInput = any, TOutput = any> = (
-    input: TInput
-) => Promise<TOutput>;
-
 export type ToEventTypes<TEvents extends EventCollection> = {
     [K in keyof TEvents]: TEvents[K] extends Event<infer TInput, infer TOutput>
         ? EventType<TInput, TOutput>
         : never;
 };
 
-export type ClientEvents<TEventTypes extends EventTypeCollection> = {
-    [K in keyof TEventTypes]: TEventTypes[K] extends EventType<
-        infer TInput,
-        infer TOutput
-    >
-        ? CallableEvent<TInput, TOutput>
-        : never;
-};
+// Client-specific types
+export type ClientEventInput<T> = T extends {
+    handler: (input: infer TInput) => any;
+}
+    ? Omit<TInput, "request">
+    : never;
+
+export type ClientEventOutput<T> = T extends {
+    handler: (input: any) => Promise<infer TOutput>;
+}
+    ? TOutput
+    : never;
+
+export type ClientCaller<TEvents extends EventCollection> = <
+    K extends keyof TEvents
+>(
+    event: K,
+    input: ClientEventInput<TEvents[K]>
+) => Promise<ClientEventOutput<TEvents[K]>>;
