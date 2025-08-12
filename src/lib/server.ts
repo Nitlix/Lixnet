@@ -12,7 +12,9 @@ type LXNServerEventInput<
     TName extends keyof Events
 > = {
     name: TName;
-    handler: LXNServerHandler<FunctionInput<Events[TName]>>;
+    handler: LXNServerHandler<
+        FunctionInput<Events[TName]> & { request: Request }
+    >;
     schema?: z.ZodSchema<any>;
 };
 
@@ -97,8 +99,21 @@ export default class LixnetServer<Events extends LXN_ServerClient_EventType> {
                 ? event.schema.parse(jsonData.input)
                 : jsonData.input;
 
-            const result = await event.handler(validatedInput);
-            return this.jsonResponseMaker({ data: result });
+            try {
+                const result = await event.handler({
+                    request,
+                    ...validatedInput,
+                });
+                return this.jsonResponseMaker({ data: result });
+            } catch (error) {
+                return this.jsonResponseMaker(
+                    {
+                        error: "Handler error",
+                        details: error,
+                    },
+                    { status: 500 }
+                );
+            }
         } catch (error) {
             if (error instanceof z.ZodError) {
                 return this.jsonResponseMaker(
