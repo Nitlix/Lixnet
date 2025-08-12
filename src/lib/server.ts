@@ -2,15 +2,23 @@ import { z } from "zod";
 import LixnetLog from "./util/log";
 import type {
     DebugLogger,
-    Event,
-    EventCollection,
-    EventType,
-    ToEventTypes,
-    LixnetServerInit,
+    FunctionInput,
+    LXNServerHandler,
+    LXN_ServerClient_EventType,
 } from "./types";
 
-export default class LixnetServer<TEvents extends EventCollection> {
-    private eventCollection: TEvents;
+type LXNServerEventInput<
+    Events extends LXN_ServerClient_EventType,
+    TName extends keyof Events
+> = {
+    name: TName;
+    handler: LXNServerHandler<FunctionInput<Events[TName]>>;
+    schema?: z.ZodSchema<any>;
+};
+
+export default class LixnetServer<Events extends LXN_ServerClient_EventType> {
+    private events: Record<string, LXNServerEventInput<Events, keyof Events>> =
+        {};
     private logger: DebugLogger = LixnetLog;
     private debugLog: boolean = false;
     private jsonResponseMaker: (data: any, init?: ResponseInit) => Response;
@@ -19,15 +27,29 @@ export default class LixnetServer<TEvents extends EventCollection> {
         debugLog = false,
         logger,
         jsonResponseMaker = Response.json,
-        events,
-    }: LixnetServerInit<TEvents>) {
+    }: {
+        debugLog?: boolean;
+        logger?: DebugLogger;
+        jsonResponseMaker?: (data: any, init?: ResponseInit) => Response;
+    }) {
         this.debugLog = debugLog;
         logger ? (this.logger = logger) : "";
         this.jsonResponseMaker = jsonResponseMaker;
-        this.eventCollection = events;
     }
 
-    public async handleRequest(request: Request) {
+    public on<K extends keyof Events & string>(
+        input: LXNServerEventInput<Events, K> | LXNServerEventInput<Events, K>[]
+    ) {
+        if (Array.isArray(input)) {
+            input.forEach((event) => {
+                this.events[event.name] = event;
+            });
+        } else {
+            this.events[input.name] = input;
+        }
+    }
+
+    public async handle(request: Request) {
         let jsonData;
         try {
             jsonData = (await request.json()) as any;
@@ -60,7 +82,7 @@ export default class LixnetServer<TEvents extends EventCollection> {
             );
         }
 
-        const event = this.eventCollection[jsonData.event];
+        const event = this.events[jsonData.event];
         if (!event) {
             return this.jsonResponseMaker(
                 {
@@ -89,25 +111,5 @@ export default class LixnetServer<TEvents extends EventCollection> {
             }
             throw error;
         }
-    }
-
-    // Returns dummy functions that match the type signatures
-    public getEventTypes(): ToEventTypes<TEvents> {
-        const eventTypes = {} as ToEventTypes<TEvents>;
-
-        Object.entries(this.eventCollection).forEach(([key, event]) => {
-            // Create a dummy function that matches the type signature
-            (eventTypes as any)[key] = {
-                input: (() => {}) as any, // Dummy function for input type
-                output: (() => {}) as any, // Dummy function for output type
-            };
-        });
-
-        return eventTypes;
-    }
-
-    // Keep this for internal use only
-    public getEventCollection(): TEvents {
-        return this.eventCollection;
     }
 }

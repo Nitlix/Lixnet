@@ -1,24 +1,24 @@
 {
-  "name": "lixnet",
-  "version": "1.1.1",
-  "author": "Nitlix",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Nitlix/Lixnet"
-  },
-  "homepage": "https://github.com/Nitlix/lixnet",
-  "description": "RPC over HTTP and WebSockets, simplified.",
-  "module": "./dist/exports.js",
-  "main": "./dist/exports.js",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "zod": "^4.0.8"
-  }
+    "name": "lixnet",
+    "version": "1.1.2",
+    "author": "Nitlix",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Nitlix/Lixnet"
+    },
+    "homepage": "https://github.com/Nitlix/lixnet",
+    "description": "RPC over HTTP and WebSockets, simplified.",
+    "module": "./dist/exports.js",
+    "main": "./dist/exports.js",
+    "type": "module",
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5.8.3"
+    },
+    "dependencies": {
+        "zod": "^4.0.17"
+    }
 }

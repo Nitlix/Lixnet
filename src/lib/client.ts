@@ -1,26 +1,16 @@
-import type {
-    EventCollection,
-    ClientEventInput,
-    ClientEventOutput,
-    ClientCaller,
-} from "./types";
+import type { FunctionInput, LXN_ServerClient_EventType } from "./types";
 
-export default class LixnetClient<TEvents extends EventCollection> {
+export default class LixnetClient<Events extends LXN_ServerClient_EventType> {
     private rpcUrl: string;
-    private events: TEvents;
 
-    public constructor({
-        events,
-        rpcUrl,
-    }: {
-        events: TEvents;
-        rpcUrl: string;
-    }) {
+    public constructor({ rpcUrl }: { rpcUrl: string }) {
         this.rpcUrl = rpcUrl;
-        this.events = events;
     }
 
-    public call: ClientCaller<TEvents> = async (event, input) => {
+    public async call<K extends keyof Events>(
+        event: K,
+        input: FunctionInput<Events[K]>
+    ): Promise<Awaited<ReturnType<Events[K]>>> {
         const response = await fetch(this.rpcUrl, {
             method: "POST",
             headers: {
@@ -36,10 +26,5 @@ export default class LixnetClient<TEvents extends EventCollection> {
         }
 
         return json.data;
-    };
-
-    // Keep this for internal use only
-    public getEventCollection(): TEvents {
-        return this.events;
     }
 }
